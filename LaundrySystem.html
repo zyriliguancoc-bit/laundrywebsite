@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mr. Laba-Laba - Smart Laundry Service System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- project styles -->
+  <link rel="stylesheet" href="LaundrySystem.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-o9N1j7kN1wXgYQvQ4f6k3QbQ4b6Y5x1b2v+0hZ8aI6M=" crossorigin=""/>
+  <style>
+    #init-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    #init-message {
+      text-align: center;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+<!-- Initialization Loading Screen -->
+<div id="init-overlay">
+  <div id="init-message">
+    <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+    <div>Initializing Mr. Laba-Laba System...</div>
+    <div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">Please wait...</div>
+  </div>
+</div>
+<!-- ══════════════ AUTH ══════════════ -->
+<div id="auth-wrap">
+  <!-- LOGIN -->
+  <div class="auth-card" id="auth-login">
+    <div class="auth-top">
+      <div class="auth-mascot"><img src="Mr.Laba-Laba Logo.png" alt="Mr. Laba-Laba"></div>
+      <div class="auth-h">Mr. Laba-Laba</div>
+      <div class="auth-sub">Smart Laundry Service System</div>
+    </div>
+    <div class="auth-body">
+      <div>
+        <label class="a-label">Username</label>
+        <div class="a-input-wrap">
+          <span class="a-icon">👤</span>
+          <input id="loginUser" class="a-input" type="text" placeholder="Enter username">
+        </div>
+        <div id="loginUserError" class="error-msg"></div>
+      </div>
+      <div>
+        <label class="a-label">Password</label>
+        <div class="a-input-wrap">
+          <span class="a-icon">🔒</span>
+          <input id="loginPass" class="a-input" type="password" placeholder="••••••••">
+          <button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('loginPass')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <div id="loginPassError" class="error-msg"></div>
+      </div>
+      <div>
+        <label class="a-label">Role</label>
+        <select class="a-select" id="loginRole">
+          <option value="">— Select Role —</option>
+          <option value="customer">Customer</option>
+          <option value="admin">Admin / Staff</option>
+          <option value="delivery">Delivery Driver</option>
+        </select>
+        <div id="loginRoleError" class="error-msg"></div>
+      </div>
+      <!-- Math CAPTCHA & Forgot Password Row -->
+      <div class="captcha-forgot-row">
+        <div class="math-captcha-wrap">
+          <label class="a-label">Math CAPTCHA</label>
+          <div class="math-captcha-container">
+            <div id="captchaQuestionDisplay" class="captcha-question">2 + 3 =</div>
+            <input id="captchaAnswer" class="a-input captcha-input" type="number" placeholder="">
+          </div>
+          <div id="captchaError" class="error-msg"></div>
+        </div>
+        <div class="forgot-password-wrap">
+          <div class="a-forgot" onclick="showAuth('forgot')">Forgot Password?</div>
+        </div>
+      </div>
+      <button class="btn-y" onclick="doLogin(event)">Sign In</button>
+      <p class="a-foot">Don't have an account? <a class="a-link-red" onclick="showAuth('s1')">Register here</a></p>
+    </div>
+  </div>
+  <!-- SIGN UP 1 -->
+  <div class="auth-card" id="auth-s1" style="display:none">
+    <div class="auth-top">
+      <div class="auth-mascot"><img src="Mr.Laba-Laba Logo.png" alt="Mr. Laba-Laba"></div>
+      <div class="auth-h">SIGN UP</div>
+    </div>
+    <div class="auth-body">
+      <div class="pdots"><div class="pd on"></div><div class="pd"></div></div>
+      <div><label class="a-label">First Name</label><div class="a-input-wrap"><span class="a-icon">👤</span><input id="firstName" class="a-input" type="text" placeholder="First Name"></div><div id="firstNameError" class="error-msg"></div></div>
+      <div><label class="a-label">Last Name</label><div class="a-input-wrap"><span class="a-icon">👤</span><input id="lastName" class="a-input" type="text" placeholder="Last Name"></div><div id="lastNameError" class="error-msg"></div></div>
+      <div><label class="a-label">Middle Name</label><div class="a-input-wrap"><span class="a-icon">👤</span><input id="middleName" class="a-input" type="text" placeholder="Middle Name"></div><div id="middleNameError" class="error-msg"></div></div>
+      <div><label class="a-label">Address</label><div class="a-input-wrap"><span class="a-icon">📌</span><input id="address" class="a-input" type="text" placeholder="Address"></div><div id="addressError" class="error-msg"></div></div>
+      <div><label class="a-label">Contact No.</label><div class="a-input-wrap"><span class="a-icon">📞</span><input id="contactNo" class="a-input" type="text" placeholder="09123456789"></div><div id="contactNoError" class="error-msg"></div></div>
+      <button class="btn-y" onclick="validateSignupStep1()">Next →</button>
+      <p class="a-foot"><a onclick="showAuth('login')">← Back to Login</a></p>
+    </div>
+  </div>
+  <!-- SIGN UP 2 -->
+  <div class="auth-card" id="auth-s2" style="display:none">
+    <div class="auth-top">
+      <div class="auth-mascot"><img src="Mr.Laba-Laba Logo.png" alt="Mr. Laba-Laba"></div>
+      <div class="auth-h">SIGN UP</div>
+    </div>
+    <div class="auth-body">
+      <div class="pdots"><div class="pd"></div><div class="pd on"></div></div>
+      <div><label class="a-label">Username</label><div class="a-input-wrap"><span class="a-icon">👤</span><input id="signupUser" class="a-input" type="text" placeholder="Choose a username"></div><div id="signupUserError" class="error-msg"></div></div>
+      <div><label class="a-label">Password</label><div class="a-input-wrap"><span class="a-icon">🔒</span><input id="signupPass" class="a-input" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('signupPass')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></svg></button></div><div id="signupPassError" class="error-msg"></div></div>
+      <div id="signupSuccess" style="display:none;background:#e8f5e9;color:#2e7d32;padding:10px;border-radius:8px;font-size:.78rem;margin-bottom:12px;text-align:center"></div>
+      <div class="btn-sky-row" style="width:100%;margin-top:12px">
+        <button class="btn-y" style="flex:1;padding:12px" onclick="showAuth('s1')">← Back</button>
+        <button class="btn-y" style="flex:1;padding:12px" onclick="registerUser()">Sign Up ✓</button>
+      </div>
+      <p class="a-foot">Already a member? <a onclick="showAuth('login')">Sign in</a></p>
+    </div>
+  </div>
+  <!-- FORGOT PW -->
+  <div class="auth-card" id="auth-forgot" style="display:none">
+    <div class="auth-top">
+      <div class="auth-mascot"><img src="Mr.Laba-Laba Logo.png" alt="Mr. Laba-Laba"></div>
+      <div class="auth-h">FORGOT PASSWORD</div>
+      <div class="auth-sub">Enter your username to reset</div>
+    </div>
+    <div class="auth-body">
+      <div><label class="a-label">Your Username</label><div class="a-input-wrap"><span class="a-icon">👤</span><input id="forgotUser" class="a-input" type="text" placeholder="Enter your Username"></div><div id="forgotUserError" class="error-msg"></div></div>
+      <button class="btn-y" onclick="verifyUsernameForReset()">Verify Username</button>
+      <p class="a-foot"><a onclick="showAuth('login')">← Back to Login</a></p>
+    </div>
+  </div>
+  <!-- RESET PW -->
+  <div class="auth-card" id="auth-reset" style="display:none">
+    <div class="auth-top">
+      <div class="auth-mascot"><img src="Mr.Laba-Laba Logo.png" alt="Mr. Laba-Laba"></div>
+      <div class="auth-h">SET NEW PASSWORD</div>
+      <div class="auth-sub">Create a password different from previous ones</div>
+    </div>
+    <div class="auth-body">
+      <div><label class="a-label">New Password</label><div class="a-input-wrap"><span class="a-icon">🔒</span><input id="resetPass1" class="a-input" type="password" placeholder="Enter new password"><button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('resetPass1')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div id="resetPass1Error" class="error-msg"></div></div>
+      <div><label class="a-label">Confirm Password</label><div class="a-input-wrap"><span class="a-icon">🔒</span><input id="resetPass2" class="a-input" type="password" placeholder="Re-enter password"><button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('resetPass2')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div id="resetPass2Error" class="error-msg"></div></div>
+      <div id="resetSuccess" style="display:none;background:#e8f5e9;color:#2e7d32;padding:10px;border-radius:8px;font-size:.78rem;margin-bottom:12px;text-align:center"></div>
+      <div class="btn-sky-row" style="width:100%;margin-top:12px">
+        <button class="btn-y" style="flex:1;padding:12px" onclick="showAuth('forgot')">← Back</button>
+        <button class="btn-y" style="flex:1;padding:12px" onclick="resetUserPassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ APP ══════════════ -->
+<div id="app-wrap">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon"><img src="Mr.Laba-Laba Logo.png" alt="Mr. Laba-Laba"></div>
+      <div class="sb-logo-text"><h1>Mr. Laba-Laba</h1><small>Smart Laundry Service System</small></div>
+    </div>
+    <nav class="sb-nav" id="sbNav"></nav>
+    <div class="sb-footer" id="sbFooter" style="display:none">
+      <div class="sf-av" id="sfAv">U</div>
+      <div class="sf-info"><strong id="sfName">User</strong><span id="sfRole">Admin</span></div>
+      <div class="pm-item" style="color:var(--red);margin-top:8px;cursor:pointer" onclick="doLogout()"><div class="pm-left"><div class="pm-ic" style="background:#ffebee">🚪</div>Logout</div></div>
+    </div>
+  </aside>
+  <!-- TOPBAR -->
+  <header class="topbar" id="topbar" style="left:240px">
+    <button class="tb-toggle" onclick="toggleSidebar()">☰</button>
+    <span class="tb-title" id="tbTitle">Dashboard</span>
+    <div class="tb-right">
+      <button class="tb-notif" onclick="nav('notifications')">🔔<span class="notif-dot"></span></button>
+      <div class="tb-av" id="tbAv" onclick="nav('profile')">U</div>
+    </div>
+  </header>
+  <!-- CONTENT -->
+  <div class="content-wrap" id="contentWrap">
+    <div class="content-inner">
+      <!-- ══ CUSTOMER DASHBOARD ══ -->
+      <div class="view" id="v-dashboard">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh;">
+          <div style="background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); padding: 40px 32px; max-width: 420px; text-align: center;">
+            <h2 style="margin-bottom: 18px; color: #2196f3;">Coming Soon!</h2>
+            <p style="font-size: 1.1rem; color: #444; margin-bottom: 24px;">This portal will soon be available on the web.<br>For now, please use the Laundry Booking Mobile App to continue.</p>
+            <button class="btn btn-primary" style="margin-top: 10px; padding: 12px 32px; font-size: 1rem; border-radius: 8px;" onclick="doLogout()">Logout</button>
+          </div>
+        </div>
+      </div>
+      <!-- ══ BOOK LAUNDRY ══ -->
+      <div class="view" id="v-book-laundry">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🧺 Book Laundry</span></div>
+          <div class="f2">
+            <div>
+              <div class="f-group"><label class="f-label">Name</label><input id="bookingName" class="f-input" type="text" placeholder="Full Name" readonly><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Mobile Number</label><input id="bookingContact" class="f-input" type="text" placeholder="+63 9XX XXX XXXX"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Laundry Service Type</label><select id="bookingLaundryType" class="f-sel"><option value="">— Laundry Type —</option><option>Wash &amp; Dry</option><option>Wash, Dry &amp; Fold</option><option>Dry Clean</option><option>Premium Care</option></select></div>
+              <div class="f-group"><label class="f-label">Type of Clothes</label><select id="bookingClothesType" class="f-sel"><option value="">— Clothes Type —</option><option>Regular Clothes</option><option>Delicates</option><option>Bedsheets &amp; Linens</option><option>Curtains</option></select></div>
+            </div>
+            <div>
+              <div class="f-group"><label class="f-label">Estimated Weight (kg) / No. of Bags</label><input id="bookingWeight" class="f-input" type="text" placeholder="e.g. 5kg or 2 bags"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Submission Method</label><select id="bookingSubmissionMethod" class="f-sel"><option value="">— Submission Method —</option><option>Pickup</option><option>Drop-off</option></select></div>
+              <div class="f-group"><label class="f-label">Receiving Method</label><select id="bookingReceivingMethod" class="f-sel"><option value="">— Receiving Method —</option><option>Delivery</option><option>Pick-up at Laundry</option></select></div>
+              <div class="f-group"><label class="f-label">Payment Method</label><select id="bookingPaymentMethod" class="f-sel"><option value="">Pay in person only</option></select></div>
+            </div>
+          </div>
+          <div class="f-group"><label class="f-label">Address</label><div id="bookingMapPlaceholder" class="map-ph" style="width:100%;height:280px;border:2px solid var(--sky);box-shadow:0 2px 8px rgba(0,0,0,0.1);">🗺️</div><input id="bookingAddress" class="f-input" style="margin-top:12px;width:100%" type="text" placeholder="Your Full Address"><div class="error-msg"></div></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-outline" onclick="nav('dashboard')">Cancel</button>
+            <button class="btn btn-primary" onclick="reviewBooking()">Review Booking →</button>
+          </div>
+        </div>
+      </div>
+      <!-- ══ BOOKING SUMMARY ══ -->
+      <div class="view" id="v-booking-summary">
+        <div class="card" style="max-width:520px">
+          <div class="card-hd"><span class="card-title">📄 Laundry Summary</span></div>
+          <div class="sum-row"><span>Laundry subtotal</span><strong>₱180</strong></div>
+          <div class="sum-row sub"><span>Laundry Type</span><span>₱100</span></div>
+          <div class="sum-row sub"><span>Clothes Type</span><span>₱80</span></div>
+          <div class="sum-row"><span>Shipping subtotal</span><strong>₱50</strong></div>
+          <div class="sum-row sub"><span>Submission Type</span><span>₱0</span></div>
+          <div class="sum-row sub"><span>Receiving Type</span><span>₱50</span></div>
+          <div class="sum-row tot"><span>Total</span><span style="color:var(--sky)">₱230</span></div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+            <button class="btn btn-outline" onclick="nav('book-laundry')">← Edit</button>
+            <button class="btn btn-primary" onclick="confirmBooking()">Confirm Booking ✓</button>
+          </div>
+        </div>
+      </div>
+      <!-- ══ MY LAUNDRY STATUS ══ -->
+      <div class="view" id="v-my-laundry-status">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="navigateBackToDashboard()" style="margin-bottom:14px">← Back to Dashboard</button>
+          <!-- Tabs for current/completed -->
+          <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:10px">
+            <button class="btn btn-outline btn-sm" style="flex:1;background:transparent" onclick="showOrderTab('current')">📦 Current Order</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;background:transparent" onclick="showOrderTab('completed')">✅ Completed</button>
+          </div>         
+          <!-- Current Orders Panel -->
+          <div id="currentOrdersPanel" class="orders-panel">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">Current Order</span></div>
+            <div id="currentOrdersContainer">
+              <!-- Current orders will be rendered here -->
+            </div>
+          </div>
+          <!-- Completed Orders Panel -->
+          <div id="completedOrdersPanel" class="orders-panel" style="display:none">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">Completed Orders</span></div>
+            <div id="completedOrdersContainer">
+              <!-- Completed orders will be rendered here. -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ MAP ══ -->
+      <div class="view" id="v-map">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🗺️ Map</span></div>
+          <div style="padding:12px">
+            <div class="map-box">
+              <div id="mapContainer" style="display:block;width:100%;height:420px;min-height:420px;position:relative;overflow:hidden;box-sizing:border-box;background:#f6f8fa;border:1px solid var(--border);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ BOOKING DETAILS ══ -->
+      <div class="view" id="v-booking-details">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('laundry-management')" style="margin-bottom:14px">← Back</button>
+          <div id="bookingDetailsContainer">
+            <!-- Booking details populated by renderBookingDetails() -->
+          </div>
+        </div>
+      </div>
+      <!-- ══ ARCHIVE ══ -->
+      <div class="view" id="v-archive">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="navigateBackToDashboard()" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">🗑️ Archive</span></div>
+          <!-- Archive Tabs -->
+          <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:10px">
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showArchiveTab('bookings')">📦 Booking Archive</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showArchiveTab('notifications')">🔔 Notification Archive</button>
+          </div>
+          <!-- Booking Archive Panel -->
+          <div id="bookingsArchivePanel" class="archive-panel">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">Archived Bookings</span></div>
+            <div id="bookingsArchiveContainer" style="overflow-x:auto">
+              <table class="tbl">
+                <thead><tr><th>#</th><th>Customer</th><th>Service</th><th>Weight</th><th>Method</th><th>Status</th><th>Total</th><th>Actions</th></tr></thead>
+                <tbody id="bookingsArchiveTable"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Notification Archive Panel -->
+          <div id="notificationsArchivePanel" class="archive-panel" style="display:none">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">Archived Notifications</span></div>
+            <div id="notificationsArchiveContainer">
+              <!-- Archived notifications will be rendered here -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ SET ADDRESS ══ -->
+      <div class="view" id="v-set-address">
+        <div class="card" style="max-width:520px">
+          <div class="card-hd"><span class="card-title">📌 Edit Address</span></div>
+          <div class="f-group"><label class="f-label">Name</label><input class="f-input" type="text" value="Juan dela Cruz"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Mobile Number</label><input class="f-input" type="text" value="+63 912 345 6789"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Address</label><div id="setAddressMapPlaceholder" class="map-ph" style="width:100%;height:280px;border:2px solid var(--sky);box-shadow:0 2px 8px rgba(0,0,0,0.1);">🗺️</div><input id="setAddressInput" class="f-input" style="margin-top:12px;width:100%" type="text" value="Phase 2 Villa Nena Balulang CDO"><div class="error-msg"></div></div>
+          <button class="btn btn-primary mt">Save Changes</button>
+        </div>
+      </div>
+      <!-- ══ NOTIFICATIONS ══ -->
+      <div class="view" id="v-notifications">
+        <div class="card" style="position:relative;">
+            <div class="card-hd"><span class="card-title">🔔 Notifications</span>
+              <button class="btn btn-outline btn-sm" onclick="markAllNotificationsRead()" style="margin-left:auto">Mark all read</button>
+            </div>
+            <div id="notificationList">
+              <!-- Notifications injected by renderNotifications() -->
+            </div>
+          </div>
+          <div id="composeMessageArea" style="display:flex;justify-content:flex-end;padding:12px 0 0"></div>
+      </div>
+      <!-- ══ PROFILE ══ -->
+      <div class="view" id="v-profile">
+        <div class="card" style="max-width:480px">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="navigateBackToDashboard()" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="prof-top">
+            <div class="prof-av" id="profAv">J</div>
+            <div><h2 style="font-size:1.1rem" id="profName">Juan dela Cruz</h2><p style="font-size:.78rem;color:var(--muted)" id="profRoleLbl">Customer</p></div>
+          </div>
+          <div class="pm-item" onclick="nav('edit-profile')"><div class="pm-left"><div class="pm-ic">✏️</div>Edit Profile</div><span>›</span></div>
+          <div class="pm-item" onclick="nav('change-password')"><div class="pm-left"><div class="pm-ic">🔐</div>Change Password</div><span>›</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px"></div>
+          <div class="pm-item" style="color:var(--red)" onclick="doLogout()"><div class="pm-left"><div class="pm-ic" style="background:#ffebee">🚪</div>Logout</div></div>
+        </div>
+      </div>
+      <!-- ══ EDIT PROFILE ══ -->
+      <div class="view" id="v-edit-profile">
+        <div class="card" style="max-width:480px">
+          <div class="card-hd"><span class="card-title">✏️ Edit Profile</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('profile')" style="margin-bottom:14px">← Back</button>
+          <div class="f-group"><label class="f-label">Full Name</label><input class="f-input" id="profFull" type="text" value="Juan dela Cruz"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Contact Number</label><input id="profContact" class="f-input" type="text" value="+63 912 345 6789"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Laundry Preferences</label><textarea class="f-input" rows="3" style="resize:none">Regular wash, light starch on polo shirts.</textarea></div>
+          <button class="btn btn-primary mt" onclick="saveProfile()">Save Changes</button>
+        </div>
+      </div>
+      <!-- ══ CHANGE PASSWORD ══ -->
+      <div class="view" id="v-change-password">
+        <div class="card" style="max-width:420px">
+          <div class="card-hd"><span class="card-title">🔐 Change Password</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('profile')" style="margin-bottom:14px">← Back</button>
+          <div class="f-group"><label class="f-label">Current Password</label><div style="position:relative;display:flex;align-items:center"><input class="f-input" id="currentPass" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('currentPass')" style="right:0"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">New Password</label><div style="position:relative;display:flex;align-items:center"><input class="f-input" id="newPass" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('newPass')" style="right:0"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Confirm New Password</label><div style="position:relative;display:flex;align-items:center"><input class="f-input" id="confirmPass" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" onclick="togglePasswordVisibility('confirmPass')" style="right:0"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="error-msg"></div></div>
+          <button class="btn btn-primary mt" onclick="changePassword()">Update Password</button>
+        </div>
+      </div>
+      <!-- ══ ADMIN DASHBOARD ══ -->
+      <div class="view" id="v-admin-dashboard">
+        <div class="hero">
+          <div class="hero-txt"><h2>Hi, Admin!</h2><p>Manage bookings, users, and laundry operations all in one place.</p></div>
+          <div class="hero-em">🧑‍💼</div>
+        </div>
+        <div class="stats">
+          <div class="stat" style="cursor:pointer" onclick="navToLaundryTab('all')"><div class="stat-ic ic-sky">📦</div><div><div class="stat-val" id="dashBookingTotal">0</div><div class="stat-lbl"> Total Bookings</div></div></div>
+          <div class="stat" style="cursor:pointer" onclick="navToLaundryTab('pending')"><div class="stat-ic ic-yel">⏳</div><div><div class="stat-val" id="dashBookingPending">0</div><div class="stat-lbl">Pending</div></div></div>
+          <div class="stat" style="cursor:pointer" onclick="navToLaundryTab('completed')"><div class="stat-ic ic-grn">✅</div><div><div class="stat-val" id="dashBookingCompleted">0</div><div class="stat-lbl">Completed</div></div></div>
+        </div>
+        <!-- Today's Bookings Table removed as requested -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;">
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Laundry Status</span></div>
+            <div id="laundryStatusDisplay" class="sb-info open"><div class="si-em">✅</div><div><h3>Laundry is Open!</h3><p>Open daily, 8:00 AM – 5:00 PM</p></div><div style="display:flex;flex-direction:column;gap:6px;margin-left:auto"><button class="btn btn-sm" style="background:#007bff;color:white;border-radius:8px;border:none;cursor:pointer;font-weight:700" onclick="nav('configuration')">✏️ Edit</button></div></div>
+          </div>
+          <div class="card">
+            <div class="card-hd" style="display:flex;align-items:center;gap:10px;">
+              <span class="card-title">Booking</span>
+              <button style="padding:6px 16px;border-radius:8px;background:#2196f3;color:#fff;font-weight:700;font-size:.95rem;border:none;box-shadow:0 2px 8px rgba(33,150,243,0.08);cursor:pointer;transition:background 0.2s;outline:none;" onmouseover="this.style.background='#1769aa'" onmouseout="this.style.background='#2196f3'" onclick="navToLaundryTab('all')">See all bookings</button>
+            </div>
+            <div id="latestBookingsContainer"></div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ BOOKINGS ══ -->
+      <div class="view" id="v-bookings">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">📦 All Bookings</span></div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th>#</th><th>Customer</th><th>Service</th><th>Weight</th><th>Method</th><th>Status</th><th>Total</th><th>Actions</th></tr></thead>
+              <tbody id="bookingsTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- ══ PENDING BOOKINGS ══ -->
+      <div class="view" id="v-pending">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">⏳ Pending Bookings</span></div>
+          <div id="pendingBookingsContainer">
+          </div>
+        </div>
+      </div>
+      <!-- ══ COMPLETED BOOKINGS ══ -->
+      <div class="view" id="v-completed">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">✅ Completed Bookings</span></div>
+          <div id="completedBookingsContainer">
+          </div>
+        </div>
+      </div>
+      <!-- ══ ACTIVE USERS ══ -->
+      <div class="view" id="v-active-users">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">👥 Active Users</span></div>
+          <div id="usersListContainer">
+          </div>
+        </div>
+      </div>
+      <!-- ══ USER MANAGEMENT ══ -->
+      <div class="view" id="v-user-management">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">👥 User Management</span><button class="btn btn-primary btn-sm" onclick="addUser()">+ Add User</button></div>
+          <!-- Search + Tabs -->
+          <div class="search" style="margin-bottom:20px"><span>🔍</span><input id="userSearch" type="text" placeholder="Search users..."></div>          
+          <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:10px">
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showUserTab('all')">All</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showUserTab('active')">Active</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showUserTab('inactive')">Inactive</button>
+          </div>
+          <!-- User lists (panels) -->
+          <div id="allUsersPanel" class="users-panel">
+            <div id="userList" style="min-height:60px"></div>
+          </div>
+          <div id="activeUsersPanel" class="users-panel" style="display:none">
+            <div id="activeUserList" style="min-height:60px"></div>
+          </div>
+          <div id="inactiveUsersPanel" class="users-panel" style="display:none">
+            <div id="inactiveUserList" style="min-height:60px"></div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ ADD / EDIT USER ══ -->
+      <div class="view" id="v-add-user">
+        <div class="card" style="max-width:500px">
+          <div class="card-hd"><span class="card-title">➕ Add / Edit User</span></div>
+          <div class="f-group"><label class="f-label">Name</label><input class="f-input" type="text" placeholder="Full Name"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Address</label><input class="f-input" type="text" placeholder="Address"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Contact No.</label><input class="f-input" type="text" placeholder="Contact No."><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Username</label><input class="f-input" type="text" placeholder="Username"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Role</label><select class="f-sel"><option>— Role —</option><option>Customer</option><option>Delivery Staff</option><option>Admin</option></select></div>
+          <div class="f-group"><label class="f-label">Status</label><select class="f-sel"><option>— Status —</option><option>Active</option><option>Inactive</option></select></div>
+          <div style="display:flex;gap:10px;margin-top:14px"><button class="btn btn-outline" onclick="nav('user-management')">Cancel</button><button class="btn btn-primary" onclick="saveUser()">Save User ✓</button></div>
+        </div>
+      </div>
+      <!-- ══ LAUNDRY MANAGEMENT ══ -->
+      <div class="view" id="v-laundry-management">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🧺 Laundry Bookings</span></div>          
+             <div class="card-hd" style="display:flex;align-items:center;gap:16px;">
+               <span class="card-title">🧺 Laundry Bookings</span>
+               <button class="btn btn-primary btn-sm" id="addBookingBtn" style="margin-left:auto;" onclick="showAddBookingModal()">Add Booking</button>
+             </div>
+          <!-- Search Function -->
+          <div class="search" style="margin-bottom:20px"><span>🔍</span><input id="laundrySearchInput" type="text" placeholder="Search bookings..."></div>          
+          <!-- Tabs for filtering bookings -->
+          <div style="display:flex;gap:10px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:14px">
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showLaundryManagementTab('all')">📦 Total Bookings</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showLaundryManagementTab('pending')">⏳ Pending</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showLaundryManagementTab('completed')">✅ Completed</button>
+          </div>         
+          <!-- All Bookings Panel -->
+          <div id="allBookingsPanel" class="bookings-panel">
+            <div class="card-hd" style="margin-bottom:16px"><span class="card-title">📅 Today's Bookings</span></div>
+            <div id="allBookingsContainer" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+              <table class="tbl">
+                <thead><tr><th>#</th><th>Customer</th><th>Service</th><th>Weight</th><th>Method</th><th>Status</th><th>Total</th><th>Actions</th></tr></thead>
+                <tbody id="allBookingsTable"></tbody>
+              </table>
+            </div>
+          </div>          
+          <!-- Pending Bookings Panel -->
+          <div id="pendingBookingsPanel" class="bookings-panel" style="display:none">
+            <div class="card-hd" style="margin-bottom:16px"><span class="card-title">⏳ Pending Bookings</span></div>
+            <div id="pendingBookingsContainer" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+              <table class="tbl">
+                <thead><tr><th>#</th><th>Customer</th><th>Service</th><th>Weight</th><th>Method</th><th>Status</th><th>Total</th><th>Actions</th></tr></thead>
+                <tbody id="pendingBookingsTable"></tbody>
+              </table>
+            </div>
+          </div>          
+          <!-- Completed Bookings Panel -->
+          <div id="completedBookingsPanel" class="bookings-panel" style="display:none">
+            <div class="card-hd" style="margin-bottom:16px"><span class="card-title">✅ Completed Bookings</span></div>
+            <div id="completedBookingsContainer" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+              <table class="tbl">
+                <thead><tr><th>#</th><th>Customer</th><th>Service</th><th>Weight</th><th>Method</th><th>Status</th><th>Total</th><th>Actions</th></tr></thead>
+                <tbody id="completedBookingsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ MESSAGING ══ -->
+      <div class="view" id="v-messaging">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">💬 Messages & Notifications</span></div>
+          <div class="f-group"><label class="f-label">Send To</label><select class="f-sel"><option>— Select Recipient —</option><option value="customers">All Customers</option><option value="drivers">All Delivery Staff</option><option value="customer-1">Zylle Liguan (Customer)</option><option value="customer-2">Jesse Buhay (Customer)</option><option value="driver-1">Driver - Juan Dela Cruz</option></select></div>
+          <div class="f-group"><label class="f-label">Message Title</label><input class="f-input" type="text" placeholder="Enter notification title"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Message Content</label><textarea class="f-input" rows="5" style="resize:none" placeholder="Enter your message here..."></textarea></div>
+          <button class="btn btn-primary mt" onclick="sendMessage()">Send Message</button>
+        </div>
+      </div>
+      <!-- ══ CONFIGURATION (Pricing) ══ -->
+      <div class="view" id="v-configuration">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">⚙️ Pricing Configuration</span></div>         
+          <div style="margin-bottom:20px;padding:14px;background:var(--input-bg);border-radius:10px">
+            <h3 style="font-size:.95rem;font-weight:700;margin-bottom:12px">Laundry Services Pricing</h3>
+            <div class="f2">
+              <div class="f-group"><label class="f-label">Wash & Dry (per kg)</label><input class="f-input" type="number" value="60" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Wash Only (per kg)</label><input class="f-input" type="number" value="40" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Dry Clean (per kg)</label><input class="f-input" type="number" value="80" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Ironing Only (per kg)</label><input class="f-input" type="number" value="25" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Premium Care (per kg)</label><input class="f-input" type="number" value="100" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Wash & Fold (per kg)</label><input class="f-input" type="number" value="50" placeholder="₱"><div class="error-msg"></div></div>
+            </div>
+          </div>
+          <div style="margin-bottom:20px;padding:14px;background:var(--input-bg);border-radius:10px">
+            <h3 style="font-size:.95rem;font-weight:700;margin-bottom:12px">Additional Charges</h3>
+            <div class="f2">
+              <div class="f-group"><label class="f-label">Pickup Fee</label><input class="f-input" type="number" value="30" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Delivery Fee</label><input class="f-input" type="number" value="50" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Rush Fee (24hr)</label><input class="f-input" type="number" value="50" placeholder="₱"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Same Day Service Fee</label><input class="f-input" type="number" value="100" placeholder="₱"><div class="error-msg"></div></div>
+            </div>
+          </div>
+          <div style="margin-bottom:20px;padding:14px;background:var(--input-bg);border-radius:10px">
+            <h3 style="font-size:.95rem;font-weight:700;margin-bottom:12px">Operating Hours</h3>
+            <div class="f2">
+              <div class="f-group"><label class="f-label">Opening Time</label><input class="f-input" type="time" value="08:00"><div class="error-msg"></div></div>
+              <div class="f-group"><label class="f-label">Closing Time</label><input class="f-input" type="time" value="17:00"><div class="error-msg"></div></div>
+            </div>
+          </div>
+          <div style="margin-bottom:20px;padding:14px;background:var(--input-bg);border-radius:10px">
+            <h3 style="font-size:.95rem;font-weight:700;margin-bottom:12px">Laundry Status</h3>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-outline" id="laundryStatusOpen" style="flex:1;background:#e8f5e9;color:#2e7d32;border:2px solid #4caf50;font-weight:700" onclick="setLaundryStatus('open')">✅ Open</button>
+              <button class="btn btn-outline" id="laundryStatusClosed" style="flex:1;background:#ffebee;color:var(--red);border:2px solid var(--red);font-weight:700" onclick="setLaundryStatus('closed')">⛔ Closed</button>
+              <button class="btn btn-outline" id="laundryStatusMaintenance" style="flex:1;background:#fff3e0;color:#f57c00;border:2px solid #ff9800;font-weight:700" onclick="setLaundryStatus('maintenance')">🔧 Maintenance</button>
+            </div>
+            <p style="font-size:.75rem;color:var(--muted);margin-top:8px;text-align:center" id="laundryStatusText">Laundry is currently Open</p>
+          </div>
+          <button class="btn btn-primary" onclick="saveConfiguration()">Save All Settings</button>
+        </div>
+      </div>
+      <!-- ══ ADMIN PROFILE ══ -->
+      <div class="view" id="v-admin-profile">
+        <div class="card" style="max-width:480px">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="prof-top">
+            <div class="prof-av" id="adminProfAv">A</div>
+            <div><h2 style="font-size:1.1rem" id="adminProfName">Admin User</h2><p style="font-size:.78rem;color:var(--muted)">Admin / Staff</p></div>
+          </div>
+          <div class="pm-item" onclick="nav('admin-edit-profile')"><div class="pm-left"><div class="pm-ic">✏️</div>Edit Profile</div><span>›</span></div>
+          <div class="pm-item" onclick="nav('admin-change-password')"><div class="pm-left"><div class="pm-ic">🔐</div>Change Password</div><span>›</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px"></div>
+          <div class="pm-item" style="color:var(--red)" onclick="doLogout()"><div class="pm-left"><div class="pm-ic" style="background:#ffebee">🚪</div>Logout</div></div>
+        </div>
+      </div>
+      <!-- ══ ADMIN EDIT PROFILE ══ -->
+      <div class="view" id="v-admin-edit-profile">
+        <div class="card" style="max-width:480px">
+          <div class="card-hd"><span class="card-title">✏️ Edit Profile</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-profile')" style="margin-bottom:14px">← Back</button>
+          <div class="f-group"><label class="f-label">Full Name</label><input class="f-input" type="text" value="Admin User"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Contact Number</label><input class="f-input" type="text" value="+63 912 345 6789"><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Email</label><input class="f-input" type="email" value="admin@laundry.com"><div class="error-msg"></div></div>
+          <button class="btn btn-primary mt">Save Changes</button>
+        </div>
+      </div>
+      <!-- ══ ADMIN CHANGE PASSWORD ══ -->
+      <div class="view" id="v-admin-change-password">
+        <div class="card" style="max-width:420px">
+          <div class="card-hd"><span class="card-title">🔐 Change Password</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('admin-profile')" style="margin-bottom:14px">← Back</button>
+          <div class="f-group"><label class="f-label">Current Password</label><div style="position:relative;display:flex;align-items:center"><input class="f-input" id="adminCurrentPass" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" style="right:0" onclick="togglePasswordVisibility('adminCurrentPass')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">New Password</label><div style="position:relative;display:flex;align-items:center"><input class="f-input" id="adminNewPass" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" style="right:0" onclick="togglePasswordVisibility('adminNewPass')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="error-msg"></div></div>
+          <div class="f-group"><label class="f-label">Confirm New Password</label><div style="position:relative;display:flex;align-items:center"><input class="f-input" id="adminConfirmPass" type="password" placeholder="••••••••"><button type="button" class="a-eye-toggle" style="right:0" onclick="togglePasswordVisibility('adminConfirmPass')"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="error-msg"></div></div>
+          <button class="btn btn-primary mt" onclick="changePassword(true)">Update Password</button>
+        </div>
+      </div>
+      <!-- ══ DELIVERY DASHBOARD ══ -->
+      <div class="view" id="v-delivery-dashboard">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh;">
+          <div style="background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); padding: 40px 32px; max-width: 420px; text-align: center;">
+            <h2 style="margin-bottom: 18px; color: #2196f3;">Coming Soon!</h2>
+            <p style="font-size: 1.1rem; color: #444; margin-bottom: 24px;">This portal will soon be available on the web.<br>For now, please use the Laundry Booking Mobile App to continue.</p>
+            <button class="btn btn-primary" style="margin-top: 10px; padding: 12px 32px; font-size: 1rem; border-radius: 8px;" onclick="doLogout()">Logout</button>
+          </div>
+        </div>
+      </div>
+      <!-- ══ DELIVERY TASKS ══ -->
+      <div class="view" id="v-delivery-tasks">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('delivery-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">🚐 My Tasks</span></div>         
+          <!-- Tabs for filtering orders -->
+          <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:10px">
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showDeliveryTaskTab('all')">📦 All Tasks</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showDeliveryTaskTab('delivery')">🚚 For Delivery</button>
+            <button class="btn btn-outline btn-sm tab-btn" style="flex:1;" onclick="showDeliveryTaskTab('pickup')">📍 For Pickup</button>
+          </div>
+          <!-- All Tasks Panel -->
+          <div id="allTasksPanel" class="tasks-panel">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">All Tasks</span></div>
+            <div id="allTasksContainer" style="overflow-x:auto">
+              <table class="tbl">
+                <thead><tr><th>Task #</th><th>Type</th><th>Customer</th><th>Address</th><th>Service</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="allTasksTable"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Delivery Tasks Panel -->
+          <div id="deliveryTasksPanel" class="tasks-panel" style="display:none">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">For Delivery</span></div>
+            <div id="deliveryTasksContainer" style="overflow-x:auto">
+              <table class="tbl">
+                <thead><tr><th>Task #</th><th>Type</th><th>Customer</th><th>Address</th><th>Service</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="deliveryTasksTable"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Pickup Tasks Panel -->
+          <div id="pickupTasksPanel" class="tasks-panel" style="display:none">
+            <div class="card-hd" style="margin-bottom:14px"><span class="card-title">For Pickup</span></div>
+            <div id="pickupTasksContainer" style="overflow-x:auto">
+              <table class="tbl">
+                <thead><tr><th>Task #</th><th>Type</th><th>Customer</th><th>Address</th><th>Service</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="pickupTasksTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ DELIVERY HISTORY ══ -->
+      <div class="view" id="v-delivery-history">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('delivery-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">📋 Completed Deliveries</span></div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th>Task #</th><th>Type</th><th>Customer</th><th>Service</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody id="completedDeliveriesTable">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- ══ DELIVERY NOTIFICATIONS ══ -->
+      <div class="view" id="v-delivery-notifications">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('delivery-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="card-hd"><span class="card-title">🔔 Notifications</span><button class="btn btn-outline btn-sm">Mark all read</button></div>
+          <div id="deliveryNotificationsContainer" style="color:#999;padding:20px;text-align:center">No notifications</div>
+          <div id="deliveryComposeMessageArea" style="display:flex;justify-content:flex-end;padding:12px 0 0"></div>
+        </div>
+      </div>
+      <!-- ══ DELIVERY PROFILE ══ -->
+      <div class="view" id="v-delivery-profile">
+        <div class="card" style="max-width:480px">
+          <div class="card-hd"><span class="card-title">🔙 Back</span></div>
+          <button class="btn btn-outline btn-sm" onclick="nav('delivery-dashboard')" style="margin-bottom:14px">← Back to Dashboard</button>
+          <div class="prof-top">
+            <div class="prof-av" id="deliveryProfAv">D</div>
+            <div><h2 style="font-size:1.1rem" id="deliveryProfName">Driver Name</h2><p style="font-size:.78rem;color:var(--muted)">Delivery Staff</p></div>
+          </div>
+          <div class="pm-item" onclick="showAlert('Coming soon')"><div class="pm-left"><div class="pm-ic">📊</div>My Statistics</div><span>›</span></div>
+          <div class="pm-item" onclick="showAlert('Coming soon')"><div class="pm-left"><div class="pm-ic">✏️</div>Edit Profile</div><span>›</span></div>
+          <div class="pm-item" onclick="showAlert('Coming soon')"><div class="pm-left"><div class="pm-ic">🔐</div>Change Password</div><span>›</span></div>
+          <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px"></div>
+          <div class="pm-item" style="color:var(--red)" onclick="doLogout()"><div class="pm-left"><div class="pm-ic" style="background:#ffebee">🚪</div>Logout</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <!-- Supabase SDK from multiple CDN sources with fallback -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- project scripts -->
+    <script src="laundrysupabase.js"></script>
+    <script src="LaundrySystem.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-p5ZkFv8b1Vjv1q2Q3r9sK1tV5r4h2s9y6Q2e8z9Yb0M=" crossorigin=""></script>
+    <!-- admin polling module for auto-refresh -->
+    <script src="adminPolling.js"></script>
+    <!-- System initialization -->
+    <script>
+      // Hide loading overlay immediately (no Supabase waiting)
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ System ready!');
+        document.getElementById('init-overlay').style.display = 'none';
+      });
+    </script>
+</body>
+</html>
